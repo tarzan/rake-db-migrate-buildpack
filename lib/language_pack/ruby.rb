@@ -93,6 +93,7 @@ class LanguagePack::Ruby < LanguagePack::Base
         post_bundler
         create_database_yml
         install_binaries
+        run_db_migrate_rake_task
         run_assets_precompile_rake_task
       end
       super
@@ -712,7 +713,26 @@ params = CGI.parse(uri.query || "")
     env("DATABASE_URL") if env("DATABASE_URL")
   end
 
-  # executes the block with GIT_DIR environment variable removed since it can mess with the current working directory git thinks it's in
+  def run_db_migrate_rake_task
+    instrument 'ruby.run_db_migrate_rake_task' do
+      if rake_task_defined?("db:migrate")
+        require 'benchmark'
+
+        if database_url.nil?
+          puts "Skipping database migration since DATABASE_URL is not defined."
+          return
+        end
+
+        topic "Running: rake db:migrate"
+        time = Benchmark.realtime { pipe("env PATH=$PATH:bin bundle exec rake db:migrate 2>&1") }
+        if $?.success?
+          puts "Database migration completed (#{"%.2f" % time}s)"
+        end
+      end
+    end
+  end
+
+# executes the block with GIT_DIR environment variable removed since it can mess with the current working directory git thinks it's in
   # @param [block] block to be executed in the GIT_DIR free context
   def allow_git(&blk)
     git_dir = ENV.delete("GIT_DIR") # can mess with bundler
