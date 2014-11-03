@@ -715,7 +715,7 @@ params = CGI.parse(uri.query || "")
 
   def run_db_migrate_rake_task
     instrument 'ruby.run_db_migrate_rake_task' do
-      if rake_task_defined?("db:migrate")
+      if rake.task_defined?("db:migrate")
         require 'benchmark'
 
         if database_url.nil?
