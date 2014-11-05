@@ -724,7 +724,7 @@ params = CGI.parse(uri.query || "")
         end
 
         topic "Running: rake db:migrate"
-        time = Benchmark.realtime { pipe("env PATH=$PATH:bin bundle exec rake db:migrate 2>&1") }
+        time = Benchmark.realtime { pipe("env DATABASE_URL='#{database_url}' PATH=$PATH:bin bundle exec rake db:migrate 2>&1") }
         if $?.success?
           puts "Database migration completed (#{"%.2f" % time}s)"
         end
